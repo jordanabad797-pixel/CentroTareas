@@ -181,19 +181,11 @@ private fun TarjetaPrimos(vm: TareasViewModel) {
 private fun TarjetaCargas(vm: TareasViewModel) {
     val carga by vm.carga.collectAsState()
     val simularError by vm.simularError.collectAsState()
+    val limiteTiempo by vm.limiteTiempo.collectAsState()
     val cargando = carga is CargaUi.Cargando
     Tarjeta(titulo = "Dos cargas") {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Switch(
-                checked = simularError,
-                onCheckedChange = { vm.cambiarSimularError(it) }
-            )
-            Text(text = "Simular error", color = MaterialTheme.colorScheme.onSurface)
-        }
+        FilaInterruptor(texto = "Simular error", activo = simularError) { vm.cambiarSimularError(it) }
+        FilaInterruptor(texto = "Límite de 2 s", activo = limiteTiempo) { vm.cambiarLimiteTiempo(it) }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BotonContorno(texto = "Una por una", habilitado = !cargando) { vm.cargarUnaPorUna() }
             Button(onClick = { vm.cargarALaVez() }, enabled = !cargando) {
@@ -277,5 +269,17 @@ private fun BotonContorno(texto: String, habilitado: Boolean, alPulsar: () -> Un
         )
     ) {
         Text(texto, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun FilaInterruptor(texto: String, activo: Boolean, alCambiar: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Switch(checked = activo, onCheckedChange = alCambiar)
+        Text(text = texto, color = MaterialTheme.colorScheme.onSurface)
     }
 }
