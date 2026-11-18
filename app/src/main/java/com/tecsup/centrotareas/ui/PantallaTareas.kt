@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -167,8 +168,20 @@ private fun TarjetaPrimos(vm: TareasViewModel) {
 @Composable
 private fun TarjetaCargas(vm: TareasViewModel) {
     val carga by vm.carga.collectAsState()
+    val simularError by vm.simularError.collectAsState()
     val cargando = carga is CargaUi.Cargando
     Tarjeta(titulo = "Dos cargas") {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Switch(
+                checked = simularError,
+                onCheckedChange = { vm.cambiarSimularError(it) }
+            )
+            Text(text = "Simular error", color = MaterialTheme.colorScheme.onSurface)
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BotonContorno(texto = "Una por una", habilitado = !cargando) { vm.cargarUnaPorUna() }
             Button(onClick = { vm.cargarALaVez() }, enabled = !cargando) {
@@ -188,7 +201,15 @@ private fun TarjetaCargas(vm: TareasViewModel) {
                 Text(text = "Pedidos: ${estado.pedidos}", color = VerdeTexto)
                 Text(text = "Tiempo: ${estado.milisegundos} ms", color = VerdeTexto)
             }
-            is CargaUi.Error -> Unit
+            is CargaUi.Error -> {
+                Recuadro(fondo = MaterialTheme.colorScheme.errorContainer) {
+                    Text(
+                        text = estado.mensaje,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+                BotonContorno(texto = "Reintentar", habilitado = true) { vm.cargarALaVez() }
+            }
         }
     }
 }
