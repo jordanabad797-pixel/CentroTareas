@@ -4,8 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -65,14 +68,31 @@ fun PantallaTareas(vm: TareasViewModel) {
 @Composable
 private fun TarjetaProgreso(vm: TareasViewModel) {
     val mensaje by vm.mensaje.collectAsState()
+    val progreso by vm.progreso.collectAsState()
     var toques by rememberSaveable { mutableIntStateOf(0) }
     Tarjeta(titulo = "Tarea con progreso") {
         Button(onClick = { toques++ }) {
             Text("Tócame: $toques", fontWeight = FontWeight.Bold)
         }
-        Button(onClick = { vm.tareaLarga() }) {
-            Text("Tarea larga", fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = { vm.tareaLarga() }) {
+                Text("Iniciar", fontWeight = FontWeight.Bold)
+            }
         }
+        LinearProgressIndicator(
+            progress = { progreso },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            gapSize = 0.dp,
+            drawStopIndicator = {}
+        )
+        Text(
+            text = "${(progreso * 100).toInt()} %",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Text(text = mensaje, color = MaterialTheme.colorScheme.onSurface)
     }
 }
