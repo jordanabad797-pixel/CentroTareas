@@ -77,6 +77,7 @@ fun PantallaTareas(vm: TareasViewModel) {
             TarjetaPrimos(vm)
             TarjetaCargas(vm)
             TarjetaComparacion(vm)
+            TarjetaHistorial(vm)
         }
     }
 }
@@ -267,6 +268,30 @@ private fun TarjetaComparacion(vm: TareasViewModel) {
                 }
             }
             BotonContorno(texto = "Limpiar", habilitado = true) { vm.limpiarTiempos() }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaHistorial(vm: TareasViewModel) {
+    val historial by vm.historial.collectAsState()
+    Tarjeta(titulo = "Historial (últimos 5)") {
+        if (historial.isEmpty()) {
+            Text(
+                text = "Todavía no hay resultados guardados",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            historial.forEachIndexed { indice, registro ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "${indice + 1}. $registro",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(vertical = 6.dp)
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
         }
     }
 }

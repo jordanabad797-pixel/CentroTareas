@@ -14,12 +14,33 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
+
+    val historial: StateFlow<List<String>> = repo.historial.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    private suspend fun registrar(texto: String) {
+        val hora = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        try {
+            repo.guardarEnHistorial("$hora · $texto")
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("HISTORIAL", "No se pudo guardar: ${e.message}")
+        }
+    }
 
     private val _mensaje = MutableStateFlow("Listo")
     val mensaje: StateFlow<String> = _mensaje.asStateFlow()
@@ -70,10 +91,14 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                 repo.contarPrimosConProgreso(hasta).collect { avance ->
                     when (avance) {
                         is AvancePrimos.Progreso -> _primos.value = PrimosUi.Calculando(avance.fraccion)
-                        is AvancePrimos.Resultado -> _primos.value = PrimosUi.Listo(
-                            cantidad = avance.cantidad,
-                            milisegundos = System.currentTimeMillis() - inicio
-                        )
+                        is AvancePrimos.Resultado -> {
+                            val milisegundos = System.currentTimeMillis() - inicio
+                            _primos.value = PrimosUi.Listo(
+                                cantidad = avance.cantidad,
+                                milisegundos = milisegundos
+                            )
+                            registrar("Primos hasta $hasta: ${avance.cantidad} ($milisegundos ms)")
+                        }
                     }
                 }
             } catch (e: CancellationException) {
@@ -158,6 +183,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                     pedidos = pedidos.size,
                     milisegundos = milisegundos
                 )
+                registrar("Una por una: ${pedidos.size} pedidos ($milisegundos ms)")
             } catch (e: TimeoutCancellationException) {
                 _carga.value = CargaUi.Error("Tardó demasiado")
             } catch (e: Exception) {
@@ -193,6 +219,7 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                     pedidos = pedidos.size,
                     milisegundos = milisegundos
                 )
+                registrar("A la vez: ${pedidos.size} pedidos ($milisegundos ms)")
             } catch (e: TimeoutCancellationException) {
                 _carga.value = CargaUi.Error("Tardó demasiado")
             } catch (e: Exception) {

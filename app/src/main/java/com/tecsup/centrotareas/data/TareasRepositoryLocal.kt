@@ -1,18 +1,51 @@
 package com.tecsup.centrotareas.data
 
+import android.content.Context
 import android.util.Log
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.tecsup.centrotareas.model.AvancePrimos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-class TareasRepositoryLocal : TareasRepository {
+private val Context.almacenHistorial: DataStore<Preferences> by preferencesDataStore(name = "historial")
+
+class TareasRepositoryLocal(context: Context) : TareasRepository {
+
+    private val almacen = context.applicationContext.almacenHistorial
+    private val claveResultados = stringPreferencesKey("resultados")
+
+    override val historial: Flow<List<String>> = almacen.data
+        .catch { e ->
+            if (e is IOException) emit(emptyPreferences()) else throw e
+        }
+        .map { preferencias -> leerRegistros(preferencias) }
+
+    override suspend fun guardarEnHistorial(registro: String) {
+        almacen.edit { preferencias ->
+            val nuevos = (listOf(registro) + leerRegistros(preferencias)).take(5)
+            preferencias[claveResultados] = nuevos.joinToString("\n")
+        }
+    }
+
+    private fun leerRegistros(preferencias: Preferences): List<String> =
+        preferencias[claveResultados]
+            ?.split("\n")
+            ?.filter { it.isNotBlank() }
+            ?: emptyList()
 
     override fun tareaConProgreso(): Flow<Float> = flow {
         Log.d("HILO", "Dentro: ${Thread.currentThread().name}")
