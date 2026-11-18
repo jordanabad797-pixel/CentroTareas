@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tecsup.centrotareas.data.TareasRepository
+import com.tecsup.centrotareas.model.AvancePrimos
 import com.tecsup.centrotareas.model.CargaUi
 import com.tecsup.centrotareas.model.PrimosUi
 import kotlinx.coroutines.CancellationException
@@ -59,12 +60,19 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
 
     fun contar(hasta: Int) {
         if (_primos.value is PrimosUi.Calculando) return
-        _primos.value = PrimosUi.Calculando
+        _primos.value = PrimosUi.Calculando(0f)
         trabajoPrimos = viewModelScope.launch {
             val inicio = System.currentTimeMillis()
             try {
-                val cantidad = repo.contarPrimos(hasta)
-                _primos.value = PrimosUi.Listo(cantidad, System.currentTimeMillis() - inicio)
+                repo.contarPrimosConProgreso(hasta).collect { avance ->
+                    when (avance) {
+                        is AvancePrimos.Progreso -> _primos.value = PrimosUi.Calculando(avance.fraccion)
+                        is AvancePrimos.Resultado -> _primos.value = PrimosUi.Listo(
+                            cantidad = avance.cantidad,
+                            milisegundos = System.currentTimeMillis() - inicio
+                        )
+                    }
+                }
             } catch (e: CancellationException) {
                 _primos.value = PrimosUi.Cancelado
                 throw e

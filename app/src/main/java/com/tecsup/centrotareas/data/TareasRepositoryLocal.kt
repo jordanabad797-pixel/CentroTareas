@@ -1,7 +1,9 @@
 package com.tecsup.centrotareas.data
 
 import android.util.Log
+import com.tecsup.centrotareas.model.AvancePrimos
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +41,17 @@ class TareasRepositoryLocal : TareasRepository {
         }
         cantidad
     }
+
+    override fun contarPrimosConProgreso(hasta: Int): Flow<AvancePrimos> = flow {
+        var cantidad = 0
+        val paso = maxOf(1, hasta / 100)
+        for (n in 2..hasta) {
+            currentCoroutineContext().ensureActive()
+            if (esPrimo(n)) cantidad++
+            if (n % paso == 0) emit(AvancePrimos.Progreso(n.toFloat() / hasta))
+        }
+        emit(AvancePrimos.Resultado(cantidad))
+    }.flowOn(Dispatchers.Default)
 
     private fun esPrimo(n: Int): Boolean {
         var d = 2
