@@ -70,8 +70,8 @@ private fun TarjetaProgreso(vm: TareasViewModel) {
         Button(onClick = { toques++ }) {
             Text("Tócame: $toques", fontWeight = FontWeight.Bold)
         }
-        Button(onClick = { vm.tareaLargaMala() }) {
-            Text("Tarea larga (MAL)", fontWeight = FontWeight.Bold)
+        Button(onClick = { vm.tareaLarga() }) {
+            Text("Tarea larga", fontWeight = FontWeight.Bold)
         }
         Text(text = mensaje, color = MaterialTheme.colorScheme.onSurface)
     }
