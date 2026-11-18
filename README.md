@@ -104,3 +104,18 @@ Contar primos es trabajo de **CPU**: el procesador está ocupado todo el tiempo.
 
 **5. ¿Por qué `async` tarda 3 s y no 5 s? ¿Qué pasa si una de las dos cargas falla?**
 Con `async` las dos cargas se lanzan al mismo tiempo y corren en paralelo: el perfil (2 s) termina mientras los pedidos (3 s) siguen cargando, así que el total es el de la más lenta, máximo(2 s, 3 s) ≈ 3 s. Una por una, en cambio, se suman: 2 s + 3 s ≈ 5 s. Si una de las cargas falla, gracias a la **concurrencia estructurada** de `coroutineScope` se cancela automáticamente la otra y la excepción se propaga. El `try/catch` del ViewModel la atrapa (dejando pasar antes la `CancellationException`) y muestra el estado `Error` con el botón **Reintentar**, sin que la app se cierre.
+
+## Fase 2 · Mejoras (rama `mejora-ia`)
+
+En la rama `mejora-ia` se agregaron 6 mejoras sin romper la arquitectura MVVM + Repository, con un commit por mejora. Los prompts y las decisiones están en [PROMPTS.md](PROMPTS.md).
+
+| # | Mejora | Qué logra | Capas que cambian |
+|---|---|---|---|
+| 1 | Progreso desde el Repository | La tarea simulada vive en el Repository y expone el progreso como `Flow<Float>` con `flow { emit(...) }` y `flowOn(Dispatchers.Default)` | Repository + ViewModel |
+| 2 | Primos con progreso | Barra y porcentaje del cálculo mientras avanza; sigue siendo cancelable | Repository + ViewModel + View |
+| 3 | Tiempo máximo | Con el interruptor «Límite de 2 s», `withTimeout(2000)` corta las cargas y muestra «Tardó demasiado» | ViewModel + View |
+| 4 | Reintento automático | Hasta 3 reintentos con espera creciente (500, 1000 y 2000 ms) antes de mostrar el error | ViewModel + View |
+| 5 | Comparación de tiempos | Tabla que acumula los tiempos de «Una por una» y «A la vez», con promedio y ahorro | ViewModel + View |
+| 6 | Historial de resultados | DataStore guarda los últimos 5 resultados (primos y cargas) y los muestra al abrir la app | Repository + ViewModel + View |
+
+Reglas que se siguen cumpliendo: sin `GlobalScope`, `runBlocking` ni `Thread.sleep`; la `CancellationException` siempre se relanza; el ViewModel no recibe `Context` (solo el Repository, desde `MainActivity`).
