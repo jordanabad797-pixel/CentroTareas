@@ -182,6 +182,7 @@ private fun TarjetaCargas(vm: TareasViewModel) {
     val carga by vm.carga.collectAsState()
     val simularError by vm.simularError.collectAsState()
     val limiteTiempo by vm.limiteTiempo.collectAsState()
+    val reintento by vm.reintento.collectAsState()
     val cargando = carga is CargaUi.Cargando
     Tarjeta(titulo = "Dos cargas") {
         FilaInterruptor(texto = "Simular error", activo = simularError) { vm.cambiarSimularError(it) }
@@ -194,7 +195,15 @@ private fun TarjetaCargas(vm: TareasViewModel) {
         }
         when (val estado = carga) {
             is CargaUi.Inicial -> Unit
-            is CargaUi.Cargando -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            is CargaUi.Cargando -> {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                if (reintento > 0) {
+                    Text(
+                        text = "Reintento $reintento de 3...",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             is CargaUi.Exito -> Recuadro(fondo = VerdeFondo) {
                 Text(
                     text = "Modo: ${estado.modo}",
