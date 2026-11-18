@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tecsup.centrotareas.model.CargaUi
 import com.tecsup.centrotareas.model.PrimosUi
 import com.tecsup.centrotareas.ui.theme.VerdeFondo
 import com.tecsup.centrotareas.ui.theme.VerdeTexto
@@ -164,7 +166,30 @@ private fun TarjetaPrimos(vm: TareasViewModel) {
 
 @Composable
 private fun TarjetaCargas(vm: TareasViewModel) {
+    val carga by vm.carga.collectAsState()
+    val cargando = carga is CargaUi.Cargando
     Tarjeta(titulo = "Dos cargas") {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BotonContorno(texto = "Una por una", habilitado = !cargando) { vm.cargarUnaPorUna() }
+            Button(onClick = { vm.cargarALaVez() }, enabled = !cargando) {
+                Text("A la vez", fontWeight = FontWeight.Bold)
+            }
+        }
+        when (val estado = carga) {
+            is CargaUi.Inicial -> Unit
+            is CargaUi.Cargando -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            is CargaUi.Exito -> Recuadro(fondo = VerdeFondo) {
+                Text(
+                    text = "Modo: ${estado.modo}",
+                    color = VerdeTexto,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = "Perfil: ${estado.perfil}", color = VerdeTexto)
+                Text(text = "Pedidos: ${estado.pedidos}", color = VerdeTexto)
+                Text(text = "Tiempo: ${estado.milisegundos} ms", color = VerdeTexto)
+            }
+            is CargaUi.Error -> Unit
+        }
     }
 }
 
