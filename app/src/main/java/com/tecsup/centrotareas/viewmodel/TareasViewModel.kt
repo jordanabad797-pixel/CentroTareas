@@ -107,6 +107,17 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
     private suspend fun <T> conLimite(bloque: suspend () -> T): T =
         if (_limiteTiempo.value) withTimeout(2000) { bloque() } else bloque()
 
+    private val _tiemposUnaPorUna = MutableStateFlow<List<Long>>(emptyList())
+    val tiemposUnaPorUna: StateFlow<List<Long>> = _tiemposUnaPorUna.asStateFlow()
+
+    private val _tiemposALaVez = MutableStateFlow<List<Long>>(emptyList())
+    val tiemposALaVez: StateFlow<List<Long>> = _tiemposALaVez.asStateFlow()
+
+    fun limpiarTiempos() {
+        _tiemposUnaPorUna.value = emptyList()
+        _tiemposALaVez.value = emptyList()
+    }
+
     private val _reintento = MutableStateFlow(0)
     val reintento: StateFlow<Int> = _reintento.asStateFlow()
 
@@ -139,11 +150,13 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                         Pair(perfil, pedidos)
                     }
                 }
+                val milisegundos = System.currentTimeMillis() - inicio
+                _tiemposUnaPorUna.value = _tiemposUnaPorUna.value + milisegundos
                 _carga.value = CargaUi.Exito(
                     modo = "Una por una",
                     perfil = perfil,
                     pedidos = pedidos.size,
-                    milisegundos = System.currentTimeMillis() - inicio
+                    milisegundos = milisegundos
                 )
             } catch (e: TimeoutCancellationException) {
                 _carga.value = CargaUi.Error("Tardó demasiado")
@@ -172,11 +185,13 @@ class TareasViewModel(private val repo: TareasRepository) : ViewModel() {
                         }
                     }
                 }
+                val milisegundos = System.currentTimeMillis() - inicio
+                _tiemposALaVez.value = _tiemposALaVez.value + milisegundos
                 _carga.value = CargaUi.Exito(
                     modo = "A la vez",
                     perfil = perfil,
                     pedidos = pedidos.size,
-                    milisegundos = System.currentTimeMillis() - inicio
+                    milisegundos = milisegundos
                 )
             } catch (e: TimeoutCancellationException) {
                 _carga.value = CargaUi.Error("Tardó demasiado")

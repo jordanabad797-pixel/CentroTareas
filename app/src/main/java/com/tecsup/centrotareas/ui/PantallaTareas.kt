@@ -19,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tecsup.centrotareas.model.CargaUi
@@ -74,6 +76,7 @@ fun PantallaTareas(vm: TareasViewModel) {
             TarjetaProgreso(vm)
             TarjetaPrimos(vm)
             TarjetaCargas(vm)
+            TarjetaComparacion(vm)
         }
     }
 }
@@ -224,6 +227,82 @@ private fun TarjetaCargas(vm: TareasViewModel) {
                 BotonContorno(texto = "Reintentar", habilitado = true) { vm.cargarALaVez() }
             }
         }
+    }
+}
+
+@Composable
+private fun TarjetaComparacion(vm: TareasViewModel) {
+    val unaPorUna by vm.tiemposUnaPorUna.collectAsState()
+    val aLaVez by vm.tiemposALaVez.collectAsState()
+    Tarjeta(titulo = "Comparación de tiempos") {
+        if (unaPorUna.isEmpty() && aLaVez.isEmpty()) {
+            Text(
+                text = "Haz cargas Una por una y A la vez para comparar",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            FilaTabla("Carga", "Una por una", "A la vez", encabezado = true)
+            for (i in 0 until maxOf(unaPorUna.size, aLaVez.size)) {
+                FilaTabla(
+                    "${i + 1}",
+                    unaPorUna.getOrNull(i)?.let { "$it ms" } ?: "-",
+                    aLaVez.getOrNull(i)?.let { "$it ms" } ?: "-"
+                )
+            }
+            val promedioUna = if (unaPorUna.isEmpty()) null else unaPorUna.average().toLong()
+            val promedioVez = if (aLaVez.isEmpty()) null else aLaVez.average().toLong()
+            FilaTabla(
+                "Promedio",
+                promedioUna?.let { "$it ms" } ?: "-",
+                promedioVez?.let { "$it ms" } ?: "-",
+                encabezado = true
+            )
+            if (promedioUna != null && promedioVez != null) {
+                Recuadro(fondo = MaterialTheme.colorScheme.primaryContainer) {
+                    Text(
+                        text = "A la vez ahorra ${promedioUna - promedioVez} ms en promedio",
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            BotonContorno(texto = "Limpiar", habilitado = true) { vm.limpiarTiempos() }
+        }
+    }
+}
+
+@Composable
+private fun FilaTabla(
+    primera: String,
+    segunda: String,
+    tercera: String,
+    encabezado: Boolean = false
+) {
+    val peso = if (encabezado) FontWeight.Bold else FontWeight.Normal
+    val color = if (encabezado) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp)
+        ) {
+            Text(text = primera, color = color, fontWeight = peso, modifier = Modifier.weight(1f))
+            Text(
+                text = segunda,
+                color = color,
+                fontWeight = peso,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1.3f)
+            )
+            Text(
+                text = tercera,
+                color = color,
+                fontWeight = peso,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1.3f)
+            )
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
